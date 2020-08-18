@@ -1,6 +1,8 @@
 ArrayList<PVector[]> lines = new ArrayList<PVector[]>();
 float angle = 0;
-float viewAngle = 60;
+int viewAngleBase = 120;
+int viewAngle = 220;
+int viewDistance = 400;
 PVector pos = new PVector(400,400);
 
 void setup(){
@@ -93,33 +95,43 @@ void InitLines(float x1, float y1, float x2, float y2)
 
 void Init()
 {
-  InitLines(30, 50, 750, 150);
-  InitLines(600, 50, 601, 400);
+  InitLines(30, 50, 350, 51);
+  InitLines(450, 50, 800, 51);
+  //InitLines(600, 50, 601, 400);
 }
 
 void draw(){
-  float[] zbuffer = new float[800];
+  float[] zbuffer = new float[viewAngle*2];
   float x = pos.x;
   float y = pos.y;
   background(0);
   stroke(255,255,255);
+  float dva = viewAngleBase/1.0/viewAngle;
   for (PVector[] p: lines)
   {
     PVector p1 = p[0];
     PVector p2 = p[1];
-    for (int xx = -400; xx < 400; xx++)
+    
+    for (int xx = -viewAngle; xx < viewAngle; xx++)
     {
-      //float a = (xx - 400)/400.0*viewAngle;
-      //float ar = radians(a); //<>//
-      //PVector p0 = new PVector(x, y);
-      //pos = new PVector(10,10);
+      //println(xx*dva);
+      PVector pos0 = new PVector(xx*dva,0);
+      PVector pos1 = new PVector(xx, viewDistance);      
+      
       float dx = cos(angle)*xx;
       float dy = sin(angle)*xx;
       PVector dir = new PVector(dx,dy);
+      pos0.rotate(angle - HALF_PI).add(pos);
+      pos1.rotate(angle - HALF_PI).add(pos);
+      
+      line(pos0.x, pos0.y, pos1.x, pos1.y);
+      
       PVector dir2 = new PVector(cos(angle)*100,sin(angle)*100);
       PVector p01 = pos.copy().add(dir.copy().setMag(10));
-      PVector p0 = pos.copy().add(dir.copy().rotate(HALF_PI));//new PVector(x + cos(angle)* xx, y + sin(angle)* xx);
-      PVector p00 = p0.copy().add(dir2.copy().setMag(300));//pos.copy().add(dir.copy()).add(p0.copy());//p0.copy().add(p0.copy().rotate(-HALF_PI));//p0.copy().add(p0.copy().add(dir.copy().rotate(-HALF_PI).mult(15)));
+      PVector p0 = pos.copy().add(dir.copy().rotate(HALF_PI));
+      PVector p00 = p0.copy().add(dir2.copy().setMag(viewDistance));
+      
+      
       //println("pos", pos, "dir", dir, "dir2", dir2, "p0", p0, "p01", p01, "p00", p00);
       //PVector p00 = p0.copy().rotate(-HALF_PI).mult(10);// new PVector(x + cos(angle + ar)* 1000, y + sin(angle + ar)* 1000);
       //PVector p00 = new PVector(x + cos(angle + ar)* 1000, y + sin(angle + ar)* 1000);
@@ -127,22 +139,26 @@ void draw(){
       //line(p0.x,p0.y,p00.x,p00.y);
       //PVector p00 = new PVector(xx, 0);
       //float d = pointToLineDistance(new PVector(x,y), new PVector(x1,y1), new PVector(x2,y2));
-      PVector intersection = DoesLinesIntersects(p0,p00,p1,p2);
+      PVector intersection = DoesLinesIntersects(pos0, pos1,p1,p2);
       if (intersection !=null)
       {
-        float d = 200 - (LineLength(p0, intersection));
-        if (zbuffer[xx + 400] < d)
-          zbuffer[xx+400] = d;
+        float d = LineLength(pos0, intersection);
+        float zbv = zbuffer[xx + viewAngle];
+        if (zbv < 0.01 || zbv > d)
+          zbuffer[xx+viewAngle] = d;
       } 
     }
+    //stroke(255,255,0);
+    line(p1.x,p1.y,p2.x,p2.y);
   }
-  
+  stroke(255,255,255);
+  float dx = viewAngle*2/800.0;
   for (int xx = 0; xx < 800; xx++)
     {
-      float d = zbuffer[xx];
+      float d = viewDistance - zbuffer[(int)(xx*dx)];
       stroke(d,d,d);
-      line(xx, 400 - d*2, xx, 400 + d*2);
-      //println(d);
+      if (zbuffer[(int)(xx*dx)] > 0 )
+        line(xx, 400 - d, xx, 400 + d);
     }
   drawMinimap();
   //noLoop();
