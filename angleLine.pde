@@ -1,9 +1,9 @@
 ArrayList<PVector[]> lines = new ArrayList<PVector[]>();
-float angle = 0;
-int viewAngleBase = 120;
-int viewAngle = 220;
-int viewDistance = 400;
-PVector pos = new PVector(400,400);
+float angle = -HALF_PI;
+int viewAngleBase = 10;
+int viewAngle = 100;
+int viewDistance = 600;
+PVector pos = new PVector(425,425);
 
 void setup(){
   size(800,800);
@@ -15,14 +15,18 @@ void keyPressed() {
     viewAngle -= 1;
   } else if (key == 'x'){
     viewAngle += 1;
+  } else if (key == 'c') {
+    viewAngleBase -= 1;
+  } else if (key == 'v'){
+    viewAngleBase += 1;
   } else if (key == 'e') {
-    angle += 0.1;
+    angle += 0.05;
   } else if (key == 'q'){
-    angle -= 0.1;
+    angle -= 0.05;
   } else 
   {
-    float dx = cos(angle)*10;
-    float dy = sin(angle)*10;
+    float dx = cos(angle)*2;
+    float dy = sin(angle)*2;
     PVector dir = new PVector(dx,dy);
     if (key == 'w'){
       pos = pos.add(dir);
@@ -47,40 +51,54 @@ float slope(float x1, float y1, float x2, float y2) { return (y2-y1)/(x2-x1); }
 
 float pointToLineDistance(PVector p, PVector P0, PVector P1)
 {
+  float[] abc = lineABC(P0,P1);
+  float A = abc[0];
+  float B = abc[1];
+  float C = abc[2];
+  float d = (abs(A*p.x + B*p.y + C))/(sqrt(sq(A)+sq(B)));
+  float a = lineLength(p.x,p.y,P0.x,P0.y);
+  float c = lineLength(p.x,p.y,P1.x,P1.y);
+  float b = lineLength(P0.x,P0.y,P1.x,P1.y);
+ 
+  if (IsInside(p,P0,P1))
+    return d;
+   return min(a,c);
+}
+
+float[] lineABC(PVector P0, PVector P1)
+{
   float A = P0.y-P1.y;
   float B = P1.x-P0.x;
   float C = -A*P0.x-B*P0.y;
-  float d = (abs(A*p.x + B*p.y + C))/(sqrt(sq(A)+sq(B)));
+  return new float[]{A,B,C}; 
+}
+
+boolean IsInside(PVector p, PVector P0, PVector P1)
+{
   float a = lineLength(p.x,p.y,P0.x,P0.y);
   float c = lineLength(p.x,p.y,P1.x,P1.y);
   float b = lineLength(P0.x,P0.y,P1.x,P1.y);
   float c1 = sq(a) + sq(b) - sq(c);
   float c2 = sq(c) + sq(b) - sq(a);
-  boolean inside = c1 > 0 && c2 > 0;
-  if (inside)
-    return d;
-   return min(a,c);
-}
+  return c1 > 0 && c2 > 0;
+} //<>//
 
-PVector DoesLinesIntersects(PVector l1p1, PVector l1p2, PVector l2p1, PVector l2p2)
+PVector DoesLinesIntersects2(PVector l1p1, PVector l1p2, PVector l2p1, PVector l2p2)
 {
-    float s1_x, s1_y, s2_x, s2_y; //<>//
-    s1_x = l1p2.x - l1p1.x;
-    s1_y = l1p2.y - l1p1.y;
-    s2_x = l2p2.x - l2p1.x;
-    s2_y = l2p2.y - l2p1.y;
-
-    float s, t;
-    s = (-s1_y * (l1p1.x - l1p1.x) + s1_x * (l1p1.y - l1p1.y)) / (-s2_x * s1_y + s1_x * s2_y);
-    t = ( s2_x * (l1p1.y - l2p1.y) - s2_y * (l1p1.x - l2p1.x)) / (-s2_x * s1_y + s1_x * s2_y);
-
-    if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
-    {
-      PVector r = new PVector(l1p1.x + (t * s1_x), l1p1.y + (t * s1_y));
-      if (r.x < max(l2p1.x, l2p2.x) && r.x > min(l2p1.x, l2p2.x) && r.y < max(l2p1.y, l2p2.y) && r.y > min(l2p1.y, l2p2.y))
-        return r;
-    }
-    return null;
+  float[] abc1 = lineABC(l1p1, l1p2);
+  float[] abc2 = lineABC(l2p1, l2p2);
+  float a1 = abc1[0];
+  float a2 = abc2[0];
+  float b1 = abc1[1];
+  float b2 = abc2[1];
+  float c1 = abc1[2];
+  float c2 = abc2[2];
+  float x = (b1*c2 - b2*c1)/(a1*b2-a2*b1);
+  float y = (a2*c1-a1*c2)/(a1*b2-a2*b1);
+  PVector p = new PVector(x,y);
+  if (IsInside(p,l1p1,l1p2) && IsInside(p,l2p1,l2p2))
+    return p;
+   return null;
 }
 
 float LineLength(PVector p0, PVector p1){ return sqrt(sq(p0.x - p1.x) + sq(p0.y - p1.y)); }
@@ -95,70 +113,79 @@ void InitLines(float x1, float y1, float x2, float y2)
 
 void Init()
 {
-  InitLines(30, 50, 350, 51);
-  InitLines(450, 50, 800, 51);
-  //InitLines(600, 50, 601, 400);
+  InitLines(0, 0, 800, 0);
+  InitLines(0, 0, 0, 800);
+  InitLines(800, 0, 800, 800);
+  InitLines(0, 800, 800, 800);
+  
+  InitLines(300, 300, 400, 300);
+  InitLines(350, 250, 350, 350);
+  
+  InitLines(600, 500, 700, 500);
+  InitLines(600, 500, 650, 550);
+  InitLines(650, 550, 700, 500);
+  
+  InitLines(100, 400, 200, 300);
+  InitLines(200, 300, 300, 400);
+  
+  InitLines(200, 500, 300, 700);
+  
+  InitLines(400, 400, 450, 400);
+  InitLines(500, 400, 550, 400);
+  InitLines(400, 400, 400, 500);
+  InitLines(550, 400, 550, 500);
+  InitLines(400, 500, 550, 500);
 }
 
 void draw(){
-  float[] zbuffer = new float[viewAngle*2];
+  float[] zbuffer = new float[800];
   float x = pos.x;
   float y = pos.y;
   background(0);
+  noStroke();
+  fill(100,100,255);
+  rect(0,0,800,400);
+  fill(100,255,100);
+  rect(0,400,800,800);
   stroke(255,255,255);
-  float dva = viewAngleBase/1.0/viewAngle;
+  float dva = (viewAngleBase*1.0)/viewAngle;
+  float dxx = viewAngle*10.0/zbuffer.length;
   for (PVector[] p: lines)
   {
     PVector p1 = p[0];
     PVector p2 = p[1];
     
-    for (int xx = -viewAngle; xx < viewAngle; xx++)
+    for (int xx = -viewAngle*5; xx < viewAngle*5; xx++)
     {
       //println(xx*dva);
-      PVector pos0 = new PVector(xx*dva,0);
-      PVector pos1 = new PVector(xx, viewDistance);      
-      
-      float dx = cos(angle)*xx;
-      float dy = sin(angle)*xx;
-      PVector dir = new PVector(dx,dy);
+      PVector pos0 = new PVector((xx/5.0)*dva,0);
+      PVector pos1 = new PVector((xx/5.0), viewDistance);      
       pos0.rotate(angle - HALF_PI).add(pos);
       pos1.rotate(angle - HALF_PI).add(pos);
       
-      line(pos0.x, pos0.y, pos1.x, pos1.y);
-      
-      PVector dir2 = new PVector(cos(angle)*100,sin(angle)*100);
-      PVector p01 = pos.copy().add(dir.copy().setMag(10));
-      PVector p0 = pos.copy().add(dir.copy().rotate(HALF_PI));
-      PVector p00 = p0.copy().add(dir2.copy().setMag(viewDistance));
-      
-      
-      //println("pos", pos, "dir", dir, "dir2", dir2, "p0", p0, "p01", p01, "p00", p00);
-      //PVector p00 = p0.copy().rotate(-HALF_PI).mult(10);// new PVector(x + cos(angle + ar)* 1000, y + sin(angle + ar)* 1000);
-      //PVector p00 = new PVector(x + cos(angle + ar)* 1000, y + sin(angle + ar)* 1000);
-      //println(a);
-      //line(p0.x,p0.y,p00.x,p00.y);
-      //PVector p00 = new PVector(xx, 0);
-      //float d = pointToLineDistance(new PVector(x,y), new PVector(x1,y1), new PVector(x2,y2));
-      PVector intersection = DoesLinesIntersects(pos0, pos1,p1,p2);
+      //line(pos0.x, pos0.y, pos1.x, pos1.y);
+      PVector intersection = DoesLinesIntersects2(pos0, pos1,p1,p2);
       if (intersection !=null)
       {
         float d = LineLength(pos0, intersection);
-        float zbv = zbuffer[xx + viewAngle];
+        float zbv = zbuffer[(int)((xx+viewAngle*5) / dxx)];
         if (zbv < 0.01 || zbv > d)
-          zbuffer[xx+viewAngle] = d;
+          zbuffer[(int)((xx+viewAngle*5) / dxx)] = d;
       } 
     }
     //stroke(255,255,0);
-    line(p1.x,p1.y,p2.x,p2.y);
+    //line(p1.x,p1.y,p2.x,p2.y);
   }
   stroke(255,255,255);
-  float dx = viewAngle*2/800.0;
-  for (int xx = 0; xx < 800; xx++)
+  
+  for (int xx = -viewAngle*5; xx < viewAngle*5; xx++)
     {
-      float d = viewDistance - zbuffer[(int)(xx*dx)];
+      int xc = (int)((xx+viewAngle*5)/dxx);
+      //println(xc);
+      float d = viewDistance - zbuffer[xc]; //<>//
       stroke(d,d,d);
-      if (zbuffer[(int)(xx*dx)] > 0 )
-        line(xx, 400 - d, xx, 400 + d);
+      if (zbuffer[xc] > 0 )
+        line(800 - xc, 400 - d, 800 - xc, 400 + d);
     }
   drawMinimap();
   //noLoop();
