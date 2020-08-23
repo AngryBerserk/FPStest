@@ -2,7 +2,7 @@ ArrayList<PVector[]> lines = new ArrayList<PVector[]>();
 float angle = -HALF_PI;
 int viewAngleBase = 10;
 int viewAngle = 100;
-int viewDistance = 600;
+int viewDistance = 400;
 PVector pos = new PVector(425,425);
 
 void setup(){
@@ -15,10 +15,15 @@ void keyPressed() {
     viewAngle -= 1;
   } else if (key == 'x'){
     viewAngle += 1;
+    println(viewAngle);
   } else if (key == 'c') {
     viewAngleBase -= 1;
   } else if (key == 'v'){
     viewAngleBase += 1;
+  } if (key == 'b') {
+    viewDistance -= 1;
+  } else if (key == 'n'){
+    viewDistance += 1;
   } else if (key == 'e') {
     angle += 0.05;
   } else if (key == 'q'){
