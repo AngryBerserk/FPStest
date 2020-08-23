@@ -15,7 +15,6 @@ void keyPressed() {
     viewAngle -= 1;
   } else if (key == 'x'){
     viewAngle += 1;
-    println(viewAngle);
   } else if (key == 'c') {
     viewAngleBase -= 1;
   } else if (key == 'v'){
